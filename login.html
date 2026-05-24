@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="description" content="gastrowerke – Anmelden oder Konto erstellen.">
+<title>Anmelden – gastrowerke</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+.login-wrap{min-height:calc(100vh - var(--header-h) - 200px);display:flex;align-items:center;justify-content:center;padding:48px 20px}
+.login-box{width:100%;max-width:480px}
+.login-logo{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.06em;color:var(--primary);text-align:center;margin-bottom:28px}
+.login-logo em{color:var(--accent);font-style:normal}
+.login-card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border-light);box-shadow:var(--shadow-md);overflow:hidden}
+.login-tabs{display:flex;border-bottom:2px solid var(--border-light)}
+.login-tab{flex:1;padding:16px;text-align:center;font-size:14px;font-weight:700;color:var(--text-muted);cursor:pointer;border:none;background:transparent;transition:all var(--trans-fast);border-bottom:2px solid transparent;margin-bottom:-2px}
+.login-tab.active{color:var(--accent-deep);border-bottom-color:var(--accent);background:var(--accent-pale)}
+.login-panel{padding:32px;display:none}
+.login-panel.active{display:block}
+.login-panel-title{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--primary);letter-spacing:.04em;margin-bottom:4px}
+.login-panel-sub{font-size:13px;color:var(--text-muted);margin-bottom:24px}
+.form-pw-wrap{position:relative}
+.form-pw-wrap .form-control{padding-right:44px}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer}
+.error-banner{display:none;background:#fde8e8;border:1px solid #e63946;border-radius:var(--radius);padding:12px 16px;font-size:13px;color:#c0392b;margin-bottom:16px;border-left:4px solid #e63946}
+.success-banner{display:none;background:#d4f5ec;border:1px solid #2a9d8f;border-radius:var(--radius);padding:12px 16px;font-size:13px;color:#1a6b56;margin-bottom:16px}
+.login-switch{text-align:center;margin-top:24px;font-size:13px;color:var(--text-muted)}
+.login-switch a{color:var(--accent);text-decoration:underline}
+</style>
+</head>
+<body>
+<div id="gw-header-root"></div>
+
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">gastro<em>werke</em></div>
+
+    <div class="login-card">
+      <div class="login-tabs">
+        <button class="login-tab active" id="tabLogin" onclick="switchTab('login')">Anmelden</button>
+        <button class="login-tab" id="tabReg" onclick="switchTab('reg')">Konto erstellen</button>
+      </div>
+
+      <!-- LOGIN PANEL -->
+      <div class="login-panel active" id="panelLogin">
+        <div class="login-panel-title">Willkommen zurück!</div>
+        <p class="login-panel-sub">Melden Sie sich mit Ihren Zugangsdaten an.</p>
+        <div class="error-banner" id="loginError"></div>
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label for="loginEmail">E-Mail-Adresse <span class="req">*</span></label>
+            <input type="email" id="loginEmail" class="form-control" placeholder="ihre@email.de" autocomplete="email">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="loginPw">Passwort <span class="req">*</span></label>
+            <div class="form-pw-wrap">
+              <input type="password" id="loginPw" class="form-control" placeholder="Ihr Passwort" autocomplete="current-password">
+              <button type="button" class="pw-toggle" onclick="togglePw('loginPw',this)">👁</button>
+            </div>
+            <span class="form-error"></span>
+          </div>
+          <div style="text-align:right; margin-top:-10px; margin-bottom:16px">
+            <a href="reset-passwort.html" style="font-size:12px; color:var(--accent);">Passwort vergessen?</a>
+          </div>
+          <div class="form-check" style="margin-bottom:20px">
+            <input type="checkbox" id="loginRemember">
+            <label for="loginRemember">Angemeldet bleiben</label>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:14px" id="loginBtn">
+            Jetzt anmelden →
+          </button>
+        </form>
+        <div class="login-switch">
+          Noch kein Konto? <a href="#" onclick="switchTab('reg');return false">Jetzt registrieren</a>
+        </div>
+      </div>
+
+      <!-- REGISTRIERUNG PANEL -->
+      <div class="login-panel" id="panelReg">
+        <div class="login-panel-title">Konto erstellen</div>
+        <p class="login-panel-sub">Registrieren Sie sich – dauert nur eine Minute.</p>
+        <div class="error-banner" id="regError"></div>
+        <div class="success-banner" id="regSuccess"></div>
+        <form id="regForm" novalidate>
+          <div class="form-group">
+            <label for="regName">Vollständiger Name <span class="req">*</span></label>
+            <input type="text" id="regName" class="form-control" placeholder="Vorname Nachname">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="regEmail">E-Mail-Adresse <span class="req">*</span></label>
+            <input type="email" id="regEmail" class="form-control" placeholder="ihre@email.de">
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="regPw">Passwort <span class="req">*</span></label>
+            <div class="form-pw-wrap">
+              <input type="password" id="regPw" class="form-control" placeholder="Mind. 8 Zeichen">
+              <button type="button" class="pw-toggle" onclick="togglePw('regPw',this)">👁</button>
+            </div>
+            <span class="form-error"></span>
+          </div>
+          <div class="form-group">
+            <label for="regPw2">Passwort bestätigen <span class="req">*</span></label>
+            <div class="form-pw-wrap">
+              <input type="password" id="regPw2" class="form-control" placeholder="Passwort wiederholen">
+              <button type="button" class="pw-toggle" onclick="togglePw('regPw2',this)">👁</button>
+            </div>
+            <span class="form-error"></span>
+          </div>
+          <div class="form-check" style="margin-bottom:20px">
+            <input type="checkbox" id="regTerms">
+            <label for="regTerms">Ich akzeptiere die <a href="agb.html">AGB</a> und die <a href="datenschutz.html">Datenschutzerklärung</a>. <span class="req">*</span></label>
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;justify-content:center;padding:14px" id="regBtn">
+            Konto erstellen →
+          </button>
+        </form>
+        <div class="login-switch">
+          Bereits ein Konto? <a href="#" onclick="switchTab('login');return false">Jetzt anmelden</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="gw-footer-root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+<script src="layout.js"></script>
+<script src="pages-common.js"></script>
+<script>
+function switchTab(tab){
+  document.getElementById('panelLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('panelReg').classList.toggle('active', tab === 'reg');
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabReg').classList.toggle('active', tab === 'reg');
+}
+
+function togglePw(id, btn){
+  const inp = document.getElementById(id);
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🔒' : '👁';
+}
+
+function clearErrors(form){
+  form.querySelectorAll('.form-error').forEach(e => e.textContent = '');
+  form.querySelectorAll('.form-group').forEach(g => g.classList.remove('has-error'));
+}
+
+function setError(form, id, msg){
+  const el = form.querySelector('#' + id)?.closest('.form-group');
+  if(el){
+    el.classList.add('has-error');
+    el.querySelector('.form-error').textContent = msg;
+  }
+  return false;
+}
+
+function validateEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+
+function getRedirectUrl(){
+  const p = new URLSearchParams(location.search).get('redirect');
+  if(p && (p.startsWith(location.origin) || !p.startsWith('http'))) return p;
+  return 'konto.html';
+}
+
+// Login
+document.getElementById('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  clearErrors(form);
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  const errBanner = document.getElementById('loginError');
+  errBanner.style.display = 'none';
+  let valid = true;
+  if(!validateEmail(email)) valid = setError(form, 'loginEmail', 'Gültige E-Mail-Adresse erforderlich.');
+  if(!pw) valid = setError(form, 'loginPw', 'Passwort erforderlich.');
+  if(!valid) return;
+
+  const btn = document.getElementById('loginBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Wird angemeldet …';
+  btn.disabled = true;
+
+  const result = await window.gwAuth.loginUser(email, pw);
+  if(!result.ok){
+    errBanner.textContent = result.msg || 'Login fehlgeschlagen.';
+    errBanner.style.display = 'block';
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    return;
+  }
+  showToast('Willkommen zurück!');
+  window.location.href = getRedirectUrl();
+});
+
+// Registrierung
+document.getElementById('regForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  clearErrors(form);
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPw').value;
+  const pw2 = document.getElementById('regPw2').value;
+  const terms = document.getElementById('regTerms').checked;
+  const errBanner = document.getElementById('regError');
+  const okBanner = document.getElementById('regSuccess');
+  errBanner.style.display = 'none';
+  okBanner.style.display = 'none';
+  let valid = true;
+  if(name.length < 2) valid = setError(form, 'regName', 'Bitte vollständigen Namen angeben.');
+  if(!validateEmail(email)) valid = setError(form, 'regEmail', 'Gültige E-Mail-Adresse erforderlich.');
+  if(pw.length < 8) valid = setError(form, 'regPw', 'Passwort mindestens 8 Zeichen.');
+  if(pw !== pw2) valid = setError(form, 'regPw2', 'Passwörter stimmen nicht überein.');
+  if(!terms){ errBanner.textContent = 'Bitte akzeptieren Sie AGB und Datenschutz.'; errBanner.style.display = 'block'; valid = false; }
+  if(!valid) return;
+
+  const btn = document.getElementById('regBtn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ Konto wird erstellt …';
+  btn.disabled = true;
+
+  const result = await window.gwAuth.registerUser(name, email, pw);
+  if(!result.ok){
+    errBanner.textContent = result.msg || 'Registrierung fehlgeschlagen.';
+    errBanner.style.display = 'block';
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    return;
+  }
+  if(result.msg){
+    okBanner.textContent = result.msg;
+    okBanner.style.display = 'block';
+    btn.innerHTML = orig;
+    btn.disabled = false;
+  } else {
+    showToast('Konto erfolgreich erstellt!');
+    window.location.href = 'konto.html';
+  }
+});
+
+// Bereits eingeloggt?
+document.addEventListener('DOMContentLoaded', async () => {
+  await new Promise(r => setTimeout(r, 200));
+  const user = await window.gwAuth.getCurrentUserAsync();
+  if(user) window.location.href = 'konto.html';
+  const tabParam = new URLSearchParams(location.search).get('tab');
+  if(tabParam === 'register') switchTab('reg');
+});
+</script>
+</body>
+</html>

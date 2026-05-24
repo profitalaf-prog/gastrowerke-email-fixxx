@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+<meta name="description" content="gastrowerke – Alle Produkte: Edelstahlmöbel, Gastrotechnik, Kühlung. Jetzt filtern, sortieren und kaufen.">
+<title>Produkte – gastrowerke</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+/* Nur kategoriespezifische Styles – keine Breakpoints mehr, die shared.css übernimmt alles */
+.cat-hero{background:var(--primary);color:white;padding:40px 0}
+.cat-hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,52px);letter-spacing:.04em;margin-bottom:8px}
+.cat-hero-title em{color:var(--accent-light);font-style:normal}
+.cat-hero-sub{color:rgba(255,255,255,.65);font-size:15px}
+.cat-layout{display:grid;grid-template-columns:260px 1fr;gap:28px;padding:28px 0 60px;align-items:start}
+.filter-sidebar{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border-light);box-shadow:var(--shadow-xs);padding:20px;position:sticky;top:calc(var(--header-h) + 20px)}
+.filter-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border-light)}
+.filter-group{margin-bottom:20px}
+.filter-group-label{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px}
+.filter-options label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-mid);padding:5px 0;cursor:pointer}
+.filter-options input[type="checkbox"]{accent-color:var(--accent);width:15px;height:15px}
+.filter-price-row{display:flex;gap:8px;margin-top:8px}
+.filter-price-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;outline:none}
+.filter-price-input:focus{border-color:var(--accent)}
+.btn-filter-apply{display:block;width:100%;padding:10px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xl);font-size:13px;font-weight:700;margin-top:8px}
+.btn-filter-apply:hover{background:var(--accent-deep)}
+.btn-filter-reset{display:block;width:100%;padding:9px;background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-xl);font-size:12px;margin-top:6px}
+.btn-filter-reset:hover{background:var(--accent-pale)}
+.sort-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.result-count{font-size:13px;color:var(--text-muted)}
+.sort-select{padding:9px 14px;border:1.5px solid var(--border);border-radius:var(--radius-xl);font-size:13px;font-family:inherit;background:var(--white);outline:none}
+.view-btns{display:flex;gap:4px}
+.view-btn{width:34px;height:34px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--white);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer}
+.view-btn.active,.view-btn:hover{background:var(--accent-pale);border-color:var(--accent)}
+.product-grid.list-view{grid-template-columns:1fr}
+.product-grid.list-view .product-card{display:grid;grid-template-columns:200px 1fr;transform:none}
+.product-grid.list-view .product-img-wrap{aspect-ratio:auto;height:100%}
+.active-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.active-filter-tag{display:inline-flex;align-items:center;gap:6px;background:var(--accent-pale);border:1px solid var(--accent);color:var(--accent-deep);font-size:12px;font-weight:600;padding:4px 10px;border-radius:50px;cursor:pointer}
+.filter-mobile-toggle{display:none;width:100%;padding:12px 16px;background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius-xl);font-size:14px;font-weight:600;margin-bottom:16px;text-align:left}
+.no-results{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.pagination{display:flex;gap:6px;justify-content:center;padding:32px 0 0;flex-wrap:wrap}
+.page-btn{width:38px;height:38px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;cursor:pointer}
+.page-btn.active,.page-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+
+@media(max-width:860px){
+  .cat-layout{grid-template-columns:1fr}
+  .filter-sidebar{display:none}
+  .filter-sidebar.mobile-open{display:block}
+  .filter-mobile-toggle{display:block}
+}
+</style>
+</head>
+<body>
+
+<div id="gw-header-root"></div>
+
+<!-- CATEGORY HERO -->
+<div class="cat-hero">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a href="index.html">Start</a><span>›</span>
+      <span id="bc-cat">Alle Produkte</span>
+    </nav>
+    <h1 class="cat-hero-title" id="cat-page-title">Alle <em>Produkte</em></h1>
+    <p class="cat-hero-sub" id="cat-page-sub">Professionelle Gastroausstattung für Restaurants, Hotels und Großküchen.</p>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="cat-layout">
+    <!-- FILTER SIDEBAR -->
+    <aside>
+      <button class="filter-mobile-toggle" id="filterMobileToggle">🔧 Filter &amp; Sortierung</button>
+      <div class="filter-sidebar" id="filterSidebar">
+        <div class="filter-title">Filter</div>
+        <div class="filter-group">
+          <div class="filter-group-label">Kategorie</div>
+          <div class="filter-options" id="catFilterOptions"></div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Preis</div>
+          <div class="filter-price-row">
+            <input type="number" class="filter-price-input" id="priceMin" placeholder="Min €" min="0">
+            <span>–</span>
+            <input type="number" class="filter-price-input" id="priceMax" placeholder="Max €" min="0">
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="filter-group-label">Besonderheiten</div>
+          <div class="filter-options">
+            <label><input type="checkbox" id="filterSale"> Nur Sale-Artikel</label>
+            <label><input type="checkbox" id="filterNew"> Nur Neuheiten</label>
+            <label><input type="checkbox" id="filterTop"> Nur Bestseller</label>
+          </div>
+        </div>
+        <button class="btn-filter-apply" onclick="applyFilters()">Filter anwenden</button>
+        <button class="btn-filter-reset" onclick="resetFilters()">Filter zurücksetzen</button>
+      </div>
+    </aside>
+
+    <!-- PRODUCTS AREA -->
+    <main>
+      <div class="sort-bar">
+        <div class="result-count" id="resultCount"></div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+            <option value="default">Standard</option>
+            <option value="price-asc">Preis aufsteigend</option>
+            <option value="price-desc">Preis absteigend</option>
+            <option value="rating">Bewertung</option>
+            <option value="name">Name A–Z</option>
+          </select>
+          <div class="view-btns">
+            <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')">▦</button>
+            <button class="view-btn" id="listViewBtn" onclick="setView('list')">☰</button>
+          </div>
+        </div>
+      </div>
+      <div class="active-filters" id="activeFilters"></div>
+      <div class="product-grid" id="product-grid"></div>
+      <div class="pagination" id="pagination"></div>
+    </main>
+  </div>
+</div>
+
+<div id="gw-footer-root"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+<script src="app.js"></script>
+<script>
+let allProducts=[], currentView='grid', currentPage=1, pageSize=12;
+let activeCategories=[], activePriceMin=0, activePriceMax=Infinity, activeSale=false, activeNew=false, activeTop=false, activeSort='default';
+const params=new URLSearchParams(location.search);
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  allProducts = window._gwProducts || await (async()=>{const r=await fetch('products.json');return r.json();})();
+  window._gwProducts=allProducts;
+
+  const cat=params.get('cat'); const q=params.get('q');
+  if(params.get('sale')==='true'){activeSale=true;document.getElementById('filterSale').checked=true;}
+  if(params.get('new')==='true'){activeNew=true;document.getElementById('filterNew').checked=true;}
+  if(params.get('topSeller')==='true'){activeTop=true;document.getElementById('filterTop').checked=true;}
+  if(cat) activeCategories=[cat];
+
+  if(cat){document.getElementById('cat-page-title').innerHTML=cat+' <em>Produkte</em>';document.getElementById('bc-cat').textContent=cat;}
+  if(activeSale){document.getElementById('cat-page-title').innerHTML='🔥 SALE <em>Angebote</em>';}
+  if(activeNew){document.getElementById('cat-page-title').innerHTML='✨ Neue <em>Produkte</em>';}
+  if(q){document.getElementById('cat-page-title').innerHTML='Suche: <em>'+q+'</em>';document.getElementById('searchInput').value=q;}
+
+  const cats=[...new Set(allProducts.map(p=>p.category))];
+  document.getElementById('catFilterOptions').innerHTML=cats.map(c=>`<label><input type="checkbox" class="cat-cb" value="${c}"${activeCategories.includes(c)?' checked':''}> ${c}</label>`).join('');
+
+  if(q){
+    const ql=q.toLowerCase();
+    activeCategories=[];
+    const filtered=allProducts.filter(p=>p.name.toLowerCase().includes(ql)||p.category.toLowerCase().includes(ql)||(p.shortName&&p.shortName.toLowerCase().includes(ql))||(p.sku&&p.sku.toLowerCase().includes(ql)));
+    renderGrid(filtered);
+  } else {
+    applyFilters();
+  }
+
+  document.getElementById('filterMobileToggle')?.addEventListener('click',()=>{
+    document.getElementById('filterSidebar').classList.toggle('mobile-open');
+  });
+
+  document.querySelectorAll('.nav-link').forEach(l=>{if(l.href&&l.href.includes('kategorie.html'))l.classList.add('active');});
+});
+
+function getFilteredProducts(){
+  const cats=Array.from(document.querySelectorAll('.cat-cb:checked')).map(c=>c.value);
+  const pMin=parseFloat(document.getElementById('priceMin').value)||0;
+  const pMax=parseFloat(document.getElementById('priceMax').value)||Infinity;
+  const sale=document.getElementById('filterSale').checked;
+  const nw=document.getElementById('filterNew').checked;
+  const top=document.getElementById('filterTop').checked;
+  const q=params.get('q')||'';
+  return allProducts.filter(p=>{
+    if(cats.length>0 && !cats.includes(p.category)) return false;
+    if(p.price!=null && (p.price<pMin||p.price>pMax)) return false;
+    if(sale && !p.sale) return false;
+    if(nw && !p.new) return false;
+    if(top && !p.topSeller) return false;
+    if(q){const ql=q.toLowerCase();if(!p.name.toLowerCase().includes(ql)&&!p.category.toLowerCase().includes(ql)&&!(p.shortName&&p.shortName.toLowerCase().includes(ql)))return false;}
+    return true;
+  });
+}
+
+function sortProducts(list){
+  const s=document.getElementById('sortSelect').value;
+  return [...list].sort((a,b)=>{
+    if(s==='price-asc') return a.price-b.price;
+    if(s==='price-desc') return b.price-a.price;
+    if(s==='rating') return b.rating-a.rating;
+    if(s==='name') return a.name.localeCompare(b.name,'de');
+    return 0;
+  });
+}
+
+function applyFilters(){
+  const filtered=sortProducts(getFilteredProducts());
+  renderGrid(filtered);
+}
+
+function resetFilters(){
+  document.querySelectorAll('.cat-cb').forEach(cb=>cb.checked=false);
+  document.getElementById('priceMin').value='';
+  document.getElementById('priceMax').value='';
+  document.getElementById('filterSale').checked=false;
+  document.getElementById('filterNew').checked=false;
+  document.getElementById('filterTop').checked=false;
+  document.getElementById('sortSelect').value='default';
+  applyFilters();
+}
+
+function renderGrid(products){
+  const grid=document.getElementById('product-grid');
+  const rc=document.getElementById('resultCount');
+  const pgn=document.getElementById('pagination');
+  if(rc) rc.textContent=products.length+' Produkte';
+  const fmt=p=>p.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  const stars=r=>{let s='';const f=Math.floor(r);for(let i=0;i<f;i++)s+='★';if(r-f>=.5)s+='½';while((s.replace(/½/g,'').length+(s.includes('½')?1:0))<5)s+='☆';return s;};
+  const wl=JSON.parse(localStorage.getItem('gw_wishlist')||'[]');
+  const isLV=currentView==='list';
+  if(products.length===0){
+    grid.innerHTML='<div class="no-results"><h3>Keine Produkte gefunden</h3><p>Versuchen Sie andere Filter oder suchen Sie nach einem anderen Begriff.</p></div>';
+    if(pgn)pgn.innerHTML='';return;
+  }
+  const total=Math.ceil(products.length/pageSize);
+  if(currentPage>total)currentPage=1;
+  const slice=products.slice((currentPage-1)*pageSize,currentPage*pageSize);
+  grid.className='product-grid'+(isLV?' list-view':'');
+  grid.innerHTML=slice.map(p=>{
+    const bCls={sale:'badge-sale',new:'badge-new',hot:'badge-hot',top:'badge-top'}[p.badge]||'';
+    const bHtml=p.badge?`<div class="product-badges"><span class="badge ${bCls}">${p.badgeLabel}</span></div>`:'';
+    const abPrefix=p.priceNote?'ab ':'';
+    const pHtml=p.price==null?`<span class="product-price" style="font-size:13px;color:var(--text-muted)">Preis auf Anfrage</span>`:p.oldPrice?`<div><span class="product-price">${abPrefix}${fmt(p.price)}</span><span class="product-price-old">${fmt(p.oldPrice)}</span></div>`:`<span class="product-price">${abPrefix}${fmt(p.price)}</span>`;
+    const w=wl.includes(p.id);
+    return `<article class="product-card reveal">
+      <a href="produkt.html?slug=${p.slug}"><div class="product-img-wrap">
+        <img src="${p.image||'snowflake.svg'}" alt="${p.name}" loading="lazy" onerror="this.src='snowflake.svg'">${bHtml}
+        <button class="product-wishlist${w?' wished':''}" onclick="event.preventDefault();toggleWishById(${p.id},this)">${w?'❤️':'♡'}</button>
+      </div></a>
+      <div class="product-body">
+        <div class="product-category">${p.category}</div>
+        <a href="produkt.html?slug=${p.slug}" class="product-name">${p.name}</a>
+        <div class="product-stars">${stars(p.rating)} <span class="product-review-count">(${p.reviews})</span></div>
+        <div class="product-meta">${pHtml}<button class="btn-add-cart" onclick="addToCartById(${p.id},this)">🛒 In den Korb</button></div>
+      </div></article>`;
+  }).join('');
+  if(pgn&&total>1){
+    pgn.innerHTML=Array.from({length:total},(_,i)=>`<button class="page-btn${currentPage===i+1?' active':''}" onclick="gotoPage(${i+1})">${i+1}</button>`).join('');
+  } else if(pgn) pgn.innerHTML='';
+  initReveal();
+}
+
+function gotoPage(n){currentPage=n;applyFilters();window.scrollTo({top:0,behavior:'smooth'});}
+function setView(v){currentView=v;document.getElementById('gridViewBtn').classList.toggle('active',v==='grid');document.getElementById('listViewBtn').classList.toggle('active',v==='list');applyFilters();}
+</script>
+</body>
+</html>
