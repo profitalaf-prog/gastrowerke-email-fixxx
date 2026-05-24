@@ -1,21 +1,17 @@
 /**
- * gastrowerke – contact.js
- * Kontaktformular: Validierung, Versand über EmailJS
+ * gastrowerke – contact.js (EmailJS Version)
  */
-
 'use strict';
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('contactForm');
   if (!form) return;
 
-  // --------------------------------------------------------------
-  // HIER BITTE IHRE EIGENEN EMAILJS-ZUGANGSDATEN EINTRAGEN:
-  // --------------------------------------------------------------
-  const EMAILJS_PUBLIC_KEY = '3AEZ-38cqOdRYRyOM';   // z.B. "abc123def456"
-  const EMAILJS_SERVICE_ID = 'service_wbps7pe';   // z.B. "service_gastrowerke"
-  const EMAILJS_TEMPLATE_ID = 'template_0gxukky'; // z.B. "template_kontakt"
-  // --------------------------------------------------------------
+  // ========== HIER IHRE EMAILJS-ZUGANGSDATEN EINTRAGEN ==========
+  const EMAILJS_PUBLIC_KEY = '3AEZ-38cqOdRYRyOM';   // z.B. "2x3y4z5w6v7u"
+  const EMAILJS_SERVICE_ID = 'service_wbps7pe';
+  const EMAILJS_TEMPLATE_ID = 'template_0gxukky';
+  // ===============================================================
 
   const fields = {
     name:    { el: form.querySelector('#cName'),    msg: 'Bitte geben Sie Ihren Namen ein.' },
@@ -47,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function validateAll() {
     let valid = true;
     Object.values(fields).forEach(f => clearError(f));
-
     if (!fields.name.el?.value.trim()) valid = setError(fields.name, fields.name.msg);
     if (!validateEmail(fields.email.el?.value.trim() || '')) valid = setError(fields.email, fields.email.msg);
     if (!fields.subject.el?.value) valid = setError(fields.subject, fields.subject.msg);
@@ -68,50 +63,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btn = form.querySelector('#submitBtn');
     const successBox = document.getElementById('contactSuccess');
-    const originalBtnText = btn.innerHTML;
+    const originalText = btn.innerHTML;
     btn.innerHTML = '⏳ Wird gesendet …';
     btn.disabled = true;
 
     try {
-      // EmailJS initialisieren (jeder Aufruf, alternativ könnte man es einmalig machen)
       emailjs.init(EMAILJS_PUBLIC_KEY);
-
-      // Daten aus dem Formular holen
-      const templateParams = {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
         from_name: fields.name.el.value.trim(),
         reply_to: fields.email.el.value.trim(),
         phone: form.querySelector('#cPhone')?.value.trim() || '',
         company: form.querySelector('#cCompany')?.value.trim() || '',
         subject: fields.subject.el.value,
         message: fields.message.el.value.trim(),
-        // optional können Sie hier weitere Felder hinzufügen (z.B. Datum)
-      };
-
-      // E-Mail versenden
-      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
-
-      // Erfolg: Formular ausblenden, Erfolgsbox einblenden
-      form.style.display = 'none';
-      if (successBox) successBox.style.display = 'block';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      // Optional: Einsendung im localStorage protokollieren
-      const submissions = JSON.parse(localStorage.getItem('gw_contact_submissions') || '[]');
-      submissions.push({
-        name: fields.name.el.value.trim(),
-        email: fields.email.el.value.trim(),
-        subject: fields.subject.el.value,
-        message: fields.message.el.value.trim(),
-        date: new Date().toISOString()
       });
-      localStorage.setItem('gw_contact_submissions', JSON.stringify(submissions));
-
-    } catch (error) {
-      console.error('EmailJS Fehler:', error);
-      alert('Beim Senden Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut oder kontaktieren Sie uns direkt per E-Mail.');
-      // Button wiederherstellen, Formular bleibt sichtbar
+      // Erfolg
+      form.style.display = 'none';
+      successBox.style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.error('EmailJS Fehler:', err);
+      alert('Fehler beim Senden. Bitte versuchen Sie es später oder schreiben Sie uns direkt an info@gastrowerke.de.');
     } finally {
-      btn.innerHTML = originalBtnText;
+      btn.innerHTML = originalText;
       btn.disabled = false;
     }
   });
