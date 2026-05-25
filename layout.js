@@ -16,10 +16,11 @@
       <div class="topbar-right">
         <a href="preisliste.html">📋 Preisliste</a>
         <a href="kontakt.html">✉ Kontakt</a>
-      <!-- LOGIN/REGISTRIERUNG AUSGEBLENDET
-        <a href="login.html" class="hdr-login-link">👤 Login</a>
-        <a href="konto.html" class="hdr-account-link" style="display:none">👤 Konto</a>
-        -->
+      <!--
+<a href="login.html" class="hdr-login-link">👤 Login</a>
+<a href="konto.html" class="hdr-account-link">👤 Konto</a>
+-->
+
       </div>
     </div>
   </div>
