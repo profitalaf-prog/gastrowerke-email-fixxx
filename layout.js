@@ -16,15 +16,6 @@
       <div class="topbar-right">
         <a href="preisliste.html">📋 Preisliste</a>
         <a href="kontakt.html">✉ Kontakt</a>
-      
-<a href="login.html" class="hdr-login-link" id="loginLink">👤 Login</a>
-<a href="konto.html" class="hdr-account-link" id="kontoLink">👤 Konto</a>
-
-<script>
-  // Beide Links unsichtbar machen
-  document.getElementById('loginLink').style.display = 'none';
-  document.getElementById('kontoLink').style.display = 'none';
-</script>
 
 
       </div>
