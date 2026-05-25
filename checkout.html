@@ -75,6 +75,7 @@
 .co-empty-icon{font-size:72px;margin-bottom:20px}
 .co-empty h2{font-size:24px;font-weight:700;color:var(--text);margin-bottom:10px}
 .co-empty p{font-size:15px;color:var(--text-muted);margin-bottom:24px}
+.email-warning{background:#fff3cd;border:1px solid #ffeeba;border-radius:var(--radius);padding:12px;margin-top:16px;font-size:13px;color:#856404;text-align:center}
 @media(max-width:960px){.checkout-layout{grid-template-columns:1fr}.co-summary-box{position:static}}
 @media(max-width:600px){.form-row-2{grid-template-columns:1fr}.form-row-3{grid-template-columns:1fr}.checkout-steps{gap:4px}.co-step-label{display:none}.co-step-line{width:24px}}
 </style>
@@ -188,112 +189,318 @@
   <h1>Bestellung erfolgreich!</h1>
   <div class="co-order-num" id="coOrderNum">#GW-000000</div>
   <p>Vielen Dank! Wir haben Ihre Bestellbestätigung an <strong id="coSuccessEmail"></strong> gesendet.</p>
+  <div id="coEmailWarning" class="email-warning" style="display:none">
+    ⚠️ Die Bestätigungs-E-Mail konnte nicht automatisch versendet werden. Bitte kontaktieren Sie uns, falls Sie keine E-Mail erhalten.
+  </div>
   <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap"><a href="konto.html" class="btn-primary">Meine Bestellungen</a><a href="index.html" class="btn-secondary">Weiter einkaufen</a></div>
 </div>
 
 <div id="gw-footer-root"></div>
+
+<!-- EmailJS Bibliothek -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<!-- Supabase & andere Hilfsdateien -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase.js"></script>
 <script src="layout.js"></script>
 <script src="pages-common.js"></script>
-<script>
-const VAT=.19, SHIP_COST=9.90, SHIP_FREE=100;
-function fmt(p){return p.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
-function togglePanel(id){document.getElementById(id).classList.toggle('collapsed');}
-function toggleShippingAddr(cb){document.getElementById('shippingAddrFields').style.display=cb.checked?'none':'block';}
-function clearErrors(){document.querySelectorAll('.form-error').forEach(e=>e.textContent='');document.querySelectorAll('.form-group').forEach(g=>g.classList.remove('has-error'));}
-function setErr(id,msg){const el=document.getElementById(id);if(!el)return false;const grp=el.closest('.form-group');if(grp)grp.classList.add('has-error');const err=grp?.querySelector('.form-error');if(err)err.textContent=msg;return false;}
-function validateEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}
-function req(id,msg){const v=(document.getElementById(id)?.value||'').trim();if(!v){setErr(id,msg);return false;}return true;}
 
-function validateForm(){
+<script>
+// ============================================================
+// 📧 EmailJS Konfiguration (BITTE ERSETZEN SIE DIESE WERTE)
+// ============================================================
+const EMAILJS_PUBLIC_KEY  = '3AEZ-38cqOdRYRyOM';     // z.B. "abc123def456"
+const EMAILJS_SERVICE_ID  = 'service_wbps7pe';     // z.B. "service_gastrowerke"
+const EMAILJS_TEMPLATE_ID = 'template_5i54h0b';    // z.B. "template_bestellbestaetigung"
+// ============================================================
+
+const VAT = 0.19;
+const SHIP_COST = 9.90;
+const SHIP_FREE = 100;
+
+function fmt(p) {
+  return p.toLocaleString('de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+}
+
+function togglePanel(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+function toggleShippingAddr(cb) {
+  document.getElementById('shippingAddrFields').style.display = cb.checked ? 'none' : 'block';
+}
+
+function clearErrors() {
+  document.querySelectorAll('.form-error').forEach(e => e.textContent = '');
+  document.querySelectorAll('.form-group').forEach(g => g.classList.remove('has-error'));
+}
+
+function setErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return false;
+  const grp = el.closest('.form-group');
+  if (grp) grp.classList.add('has-error');
+  const err = grp?.querySelector('.form-error');
+  if (err) err.textContent = msg;
+  return false;
+}
+
+function validateEmail(v) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+function req(id, msg) {
+  const v = (document.getElementById(id)?.value || '').trim();
+  if (!v) { setErr(id, msg); return false; }
+  return true;
+}
+
+function validateForm() {
   clearErrors();
-  let ok=true;
-  if(!req('bFirstname','Vorname erforderlich.')) ok=false;
-  if(!req('bLastname','Nachname erforderlich.')) ok=false;
-  if(!req('bPhone','Telefon erforderlich.')) ok=false;
-  if(!validateEmail((document.getElementById('bEmail')?.value||'').trim())){setErr('bEmail','Gültige E-Mail erforderlich.');ok=false;}
-  if(!req('bStreet','Straße erforderlich.')) ok=false;
-  if(!req('bCity','Stadt erforderlich.')) ok=false;
-  if(!req('bZip','PLZ erforderlich.')) ok=false;
-  const sameAddr=document.getElementById('sameAddress')?.checked;
-  if(!sameAddr){
-    if(!req('sFirstname','Vorname erforderlich.')) ok=false;
-    if(!req('sLastname','Nachname erforderlich.')) ok=false;
-    if(!req('sStreet','Straße erforderlich.')) ok=false;
-    if(!req('sCity','Stadt erforderlich.')) ok=false;
-    if(!req('sZip','PLZ erforderlich.')) ok=false;
+  let ok = true;
+  if (!req('bFirstname', 'Vorname erforderlich.')) ok = false;
+  if (!req('bLastname', 'Nachname erforderlich.')) ok = false;
+  if (!req('bPhone', 'Telefon erforderlich.')) ok = false;
+  if (!validateEmail((document.getElementById('bEmail')?.value || '').trim())) {
+    setErr('bEmail', 'Gültige E-Mail erforderlich.');
+    ok = false;
   }
-  const terms=document.getElementById('coTerms');
-  const priv=document.getElementById('coPrivacy');
-  if(!terms?.checked){document.getElementById('coTermsError').textContent='Bitte akzeptieren Sie die AGB.';ok=false;}
-  if(!priv?.checked){document.getElementById('coPrivacyError').textContent='Bitte bestätigen Sie die Datenschutzerklärung.';ok=false;}
+  if (!req('bStreet', 'Straße erforderlich.')) ok = false;
+  if (!req('bCity', 'Stadt erforderlich.')) ok = false;
+  if (!req('bZip', 'PLZ erforderlich.')) ok = false;
+
+  const sameAddr = document.getElementById('sameAddress')?.checked;
+  if (!sameAddr) {
+    if (!req('sFirstname', 'Vorname erforderlich.')) ok = false;
+    if (!req('sLastname', 'Nachname erforderlich.')) ok = false;
+    if (!req('sStreet', 'Straße erforderlich.')) ok = false;
+    if (!req('sCity', 'Stadt erforderlich.')) ok = false;
+    if (!req('sZip', 'PLZ erforderlich.')) ok = false;
+  }
+
+  const terms = document.getElementById('coTerms');
+  const priv = document.getElementById('coPrivacy');
+  if (!terms?.checked) {
+    document.getElementById('coTermsError').textContent = 'Bitte akzeptieren Sie die AGB.';
+    ok = false;
+  }
+  if (!priv?.checked) {
+    document.getElementById('coPrivacyError').textContent = 'Bitte bestätigen Sie die Datenschutzerklärung.';
+    ok = false;
+  }
   return ok;
 }
 
-function renderSummary(){
-  const cart=JSON.parse(localStorage.getItem('gw_cart')||'[]');
-  const itemsEl=document.getElementById('coSummaryItems');
-  const totalsEl=document.getElementById('coTotals');
-  if(!itemsEl)return;
-  if(cart.length===0){
-    document.getElementById('coForm').style.display='none';
-    document.getElementById('coEmpty').style.display='block';
+function renderSummary() {
+  const cart = JSON.parse(localStorage.getItem('gw_cart') || '[]');
+  const itemsEl = document.getElementById('coSummaryItems');
+  const totalsEl = document.getElementById('coTotals');
+  if (!itemsEl) return;
+  if (cart.length === 0) {
+    document.getElementById('coForm').style.display = 'none';
+    document.getElementById('coEmpty').style.display = 'block';
     return;
   }
-  itemsEl.innerHTML=cart.map(item=>`
+  itemsEl.innerHTML = cart.map(item => `
     <div class="co-summary-item">
-      <div class="co-sum-img">${item.image?`<img src="${item.image}" alt="${item.name}" onerror="this.src='snowflake.svg'">`:'<img src="snowflake.svg">'}</div>
-      <div style="flex:1"><div class="co-sum-name">${item.shortName||item.name}</div><div class="co-sum-qty">Menge: ${item.qty||1}</div></div>
-      <div class="co-sum-price">${fmt(item.price*(item.qty||1))}</div>
+      <div class="co-sum-img">${item.image ? `<img src="${item.image}" alt="${item.name}" onerror="this.src='snowflake.svg'">` : '<img src="snowflake.svg">'}</div>
+      <div style="flex:1"><div class="co-sum-name">${item.shortName || item.name}</div><div class="co-sum-qty">Menge: ${item.qty || 1}</div></div>
+      <div class="co-sum-price">${fmt(item.price * (item.qty || 1))}</div>
     </div>`).join('');
-  const subtotal=cart.reduce((s,i)=>s+i.price*(i.qty||1),0);
-  const shipping=subtotal<SHIP_FREE?SHIP_COST:0;
-  const gross=subtotal+shipping;
-  const net=gross/(1+VAT);
-  const vat=gross-net;
-  totalsEl.innerHTML=`${shipping===0?'<div class="co-free-ship">✓ Kostenloser Versand!</div>':''}
+  const subtotal = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
+  const shipping = subtotal < SHIP_FREE ? SHIP_COST : 0;
+  const gross = subtotal + shipping;
+  const net = gross / (1 + VAT);
+  const vat = gross - net;
+  totalsEl.innerHTML = `${shipping === 0 ? '<div class="co-free-ship">✓ Kostenloser Versand!</div>' : ''}
     <div class="co-total-row"><span>Zwischensumme</span><span>${fmt(subtotal)}</span></div>
-    <div class="co-total-row"><span>Versand</span><span>${shipping===0?'Kostenlos':fmt(shipping)}</span></div>
+    <div class="co-total-row"><span>Versand</span><span>${shipping === 0 ? 'Kostenlos' : fmt(shipping)}</span></div>
     <div class="co-total-row"><span>Netto</span><span>${fmt(net)}</span></div>
     <div class="co-total-row"><span>MwSt. 19%</span><span>${fmt(vat)}</span></div>
     <div class="co-total-row grand"><span>Gesamt</span><span>${fmt(gross)}</span></div>`;
 }
 
-async function submitOrder(){
-  if(!validateForm())return;
-  const btn=document.getElementById('btnBuy');
-  btn.innerHTML='⏳ Bestellung wird verarbeitet …';btn.disabled=true;
-  await new Promise(r=>setTimeout(r,1400));
-  const cart=JSON.parse(localStorage.getItem('gw_cart')||'[]');
-  const orderNum='GW-'+Date.now().toString().slice(-6);
-  const email=document.getElementById('bEmail').value.trim();
-  const total=cart.reduce((s,i)=>s+i.price*(i.qty||1),0);
-  const order={orderNumber:orderNum,date:new Date().toISOString(),email,items:cart,total,paymentMethod:'paypal',status:'pending',
-    shippingAddress:{firstname:document.getElementById('bFirstname')?.value||'',lastname:document.getElementById('bLastname')?.value||'',street:document.getElementById('bStreet')?.value||'',zip:document.getElementById('bZip')?.value||'',city:document.getElementById('bCity')?.value||'',country:document.getElementById('bCountry')?.value||'Deutschland',phone:document.getElementById('bPhone')?.value||''}};
-  if(window.gwAuth) await window.gwAuth.saveOrderToUser(order);
-  localStorage.removeItem('gw_cart');
-  if(typeof updateCartBadge === 'function') updateCartBadge();
-  document.getElementById('coForm').style.display='none';
-  document.getElementById('coSteps').style.display='none';
-  const suc=document.getElementById('coSuccess');
-  suc.style.display='block';
-  document.getElementById('coOrderNum').textContent='#'+orderNum;
-  document.getElementById('coSuccessEmail').textContent=email;
-  document.querySelectorAll('.co-step').forEach((s,i)=>{s.classList.remove('active');s.classList.add('done');});
-  window.scrollTo({top:0,behavior:'smooth'});
+// Hilfsfunktion: E-Mail-Inhalt als HTML für das EmailJS-Template aufbereiten
+function buildOrderItemsHtml(cart) {
+  if (!cart.length) return '<p>Keine Artikel</p>';
+  let html = '<table style="width:100%; border-collapse:collapse; font-family:sans-serif; font-size:13px;">';
+  html += '<thead><tr style="background:#f0f0f0;"><th style="padding:8px; text-align:left;">Produkt</th><th style="padding:8px;">Menge</th><th style="padding:8px;">Preis</th><th style="padding:8px;">Summe</th></tr></thead><tbody>';
+  cart.forEach(item => {
+    const sum = item.price * (item.qty || 1);
+    html += `<tr style="border-bottom:1px solid #eee;">
+      <td style="padding:8px;">${escapeHtml(item.shortName || item.name)}</td>
+      <td style="padding:8px; text-align:center;">${item.qty || 1}</td>
+      <td style="padding:8px; text-align:right;">${fmt(item.price)}</td>
+      <td style="padding:8px; text-align:right;">${fmt(sum)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  return html;
 }
 
-document.addEventListener('DOMContentLoaded',async()=>{
+function escapeHtml(str) {
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+async function sendOrderConfirmationEmail(orderData) {
+  // Prüfen, ob EmailJS konfiguriert ist (Platzhalter wurden ersetzt)
+  if (EMAILJS_PUBLIC_KEY === 'DEIN_PUBLIC_KEY' || EMAILJS_SERVICE_ID === 'DEIN_SERVICE_ID') {
+    console.warn('EmailJS ist nicht konfiguriert – E-Mail wird nicht gesendet.');
+    return false;
+  }
+
+  try {
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email: orderData.email,
+      order_number: orderData.orderNumber,
+      order_date: new Date(orderData.date).toLocaleDateString('de-DE'),
+      customer_name: `${orderData.billing.firstname} ${orderData.billing.lastname}`,
+      customer_street: orderData.billing.street,
+      customer_zip_city: `${orderData.billing.zip} ${orderData.billing.city}`,
+      shipping_name: orderData.shipping ? `${orderData.shipping.firstname} ${orderData.shipping.lastname}` : `${orderData.billing.firstname} ${orderData.billing.lastname}`,
+      shipping_street: orderData.shipping ? orderData.shipping.street : orderData.billing.street,
+      shipping_zip_city: orderData.shipping ? `${orderData.shipping.zip} ${orderData.shipping.city}` : `${orderData.billing.zip} ${orderData.billing.city}`,
+      items_html: buildOrderItemsHtml(orderData.items),
+      subtotal: fmt(orderData.subtotal),
+      shipping_cost: orderData.shippingCost === 0 ? 'Kostenlos' : fmt(orderData.shippingCost),
+      total_net: fmt(orderData.totalNet),
+      total_vat: fmt(orderData.totalVat),
+      total_gross: fmt(orderData.totalGross)
+    });
+    console.log('Bestellbestätigung per E-Mail gesendet');
+    return true;
+  } catch (error) {
+    console.error('Fehler beim Senden der Bestellbestätigung:', error);
+    return false;
+  }
+}
+
+async function submitOrder() {
+  if (!validateForm()) return;
+
+  const btn = document.getElementById('btnBuy');
+  btn.innerHTML = '⏳ Bestellung wird verarbeitet …';
+  btn.disabled = true;
+
+  // Warenkorb und Adressdaten auslesen
+  const cart = JSON.parse(localStorage.getItem('gw_cart') || '[]');
+  if (cart.length === 0) {
+    location.reload();
+    return;
+  }
+
+  const sameAddr = document.getElementById('sameAddress').checked;
+  const billing = {
+    firstname: document.getElementById('bFirstname').value.trim(),
+    lastname: document.getElementById('bLastname').value.trim(),
+    company: document.getElementById('bCompany').value.trim(),
+    street: document.getElementById('bStreet').value.trim(),
+    zip: document.getElementById('bZip').value.trim(),
+    city: document.getElementById('bCity').value.trim(),
+    country: document.getElementById('bCountry').value,
+    phone: document.getElementById('bPhone').value.trim(),
+    email: document.getElementById('bEmail').value.trim()
+  };
+  const shipping = sameAddr ? null : {
+    firstname: document.getElementById('sFirstname').value.trim(),
+    lastname: document.getElementById('sLastname').value.trim(),
+    company: document.getElementById('sCompany').value.trim(),
+    street: document.getElementById('sStreet').value.trim(),
+    zip: document.getElementById('sZip').value.trim(),
+    city: document.getElementById('sCity').value.trim(),
+    country: document.getElementById('sCountry').value
+  };
+
+  // Berechnungen
+  const subtotal = cart.reduce((s, i) => s + i.price * (i.qty || 1), 0);
+  const shippingCost = subtotal < SHIP_FREE ? SHIP_COST : 0;
+  const totalGross = subtotal + shippingCost;
+  const totalNet = totalGross / (1 + VAT);
+  const totalVat = totalGross - totalNet;
+
+  const orderNumber = 'GW-' + Date.now().toString().slice(-6);
+  const orderDate = new Date().toISOString();
+
+  // Bestellung für localStorage / Benutzer speichern
+  const order = {
+    orderNumber: orderNumber,
+    date: orderDate,
+    email: billing.email,
+    items: cart,
+    total: totalGross,
+    paymentMethod: 'paypal',
+    status: 'pending',
+    billingAddress: billing,
+    shippingAddress: shipping || billing
+  };
+
+  // Optional: In Benutzerkonto speichern (falls vorhanden)
+  if (window.gwAuth) await window.gwAuth.saveOrderToUser(order);
+
+  // E-Mail-Daten vorbereiten
+  const emailData = {
+    email: billing.email,
+    orderNumber: orderNumber,
+    date: orderDate,
+    billing: billing,
+    shipping: shipping || billing,
+    items: cart,
+    subtotal: subtotal,
+    shippingCost: shippingCost,
+    totalNet: totalNet,
+    totalVat: totalVat,
+    totalGross: totalGross
+  };
+
+  // E-Mail versuchen zu senden (asynchron, blockiert nicht die Bestellanzeige)
+  let emailSent = false;
+  try {
+    emailSent = await sendOrderConfirmationEmail(emailData);
+  } catch(e) { console.error(e); }
+
+  // Warenkorb leeren und UI aktualisieren
+  localStorage.removeItem('gw_cart');
+  if (typeof updateCartBadge === 'function') updateCartBadge();
+
+  // Erfolgsseite anzeigen
+  document.getElementById('coForm').style.display = 'none';
+  document.getElementById('coSteps').style.display = 'none';
+  const successDiv = document.getElementById('coSuccess');
+  successDiv.style.display = 'block';
+  document.getElementById('coOrderNum').textContent = '#' + orderNumber;
+  document.getElementById('coSuccessEmail').textContent = billing.email;
+  if (!emailSent) {
+    document.getElementById('coEmailWarning').style.display = 'block';
+  }
+
+  // Steps als "done" markieren
+  document.querySelectorAll('.co-step').forEach((s, i) => {
+    s.classList.remove('active');
+    s.classList.add('done');
+  });
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  btn.innerHTML = '🔒 Weiter zur Zahlung →';
+  btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
   renderSummary();
-  if(window.gwAuth){
+  if (window.gwAuth) {
     const user = await window.gwAuth.getCurrentUserAsync();
-    if(user){
-      if(document.getElementById('bEmail')) document.getElementById('bEmail').value=user.email||'';
+    if (user) {
+      if (document.getElementById('bEmail')) document.getElementById('bEmail').value = user.email || '';
       const name = user.user_metadata?.display_name || '';
       const parts = name.split(' ');
-      if(document.getElementById('bFirstname')) document.getElementById('bFirstname').value=parts[0]||'';
-      if(document.getElementById('bLastname')) document.getElementById('bLastname').value=parts.slice(1).join(' ')||'';
+      if (document.getElementById('bFirstname')) document.getElementById('bFirstname').value = parts[0] || '';
+      if (document.getElementById('bLastname')) document.getElementById('bLastname').value = parts.slice(1).join(' ') || '';
     }
   }
 });
