@@ -501,8 +501,25 @@ footer{background:var(--primary-dark);color:var(--steel-light);padding:56px 0 0}
     <p class="newsletter-sub reveal">Klicke hier um an unseren Support eine Nachricht zu senden</p>
     <form class="newsletter-form reveal" id="newsletterForm">
       <!--<input type="email" placeholder="Ihre E-Mail-Adresse" required aria-label="E-Mail für Newsletter">-->
-        <a href="kontakt.html">✉ Kontakt</a>
-    </form>
+<a href="kontakt.html" class="btn-white">✉ Kontakt</a>
+
+<style>
+.btn-white {
+  display: inline-block;
+  background-color: white;
+  color: black;          /* oder eine andere Schriftfarbe */
+  padding: 10px 20px;
+  text-decoration: none;
+  border: 1px solid #ccc;
+  border-radius: 5px;    /* abgerundete Ecken */
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1em;
+}
+.btn-white:hover {
+  background-color: #f5f5f5;  /* leichter Hover-Effekt */
+}
+</style>    </form>
   </div>
 </div> 
 
